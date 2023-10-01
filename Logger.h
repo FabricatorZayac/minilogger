@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <cstdio>
 
 namespace logging
 {
@@ -27,6 +28,9 @@ public:
     bool operator==(LevelEnum) const;
     bool operator==(const Level&) const;
 
+    static const char *cstr(LevelEnum);
+    const char *cstr() const;
+
     friend std::ostream& operator<<(std::ostream&, const Level&);
 private:
     LevelEnum value;
@@ -36,19 +40,21 @@ std::ostream& operator<<(std::ostream&, const Level::LevelEnum&);
 
 class Logger
 {
-public:
     struct LogStream
     {
         Level level;
         std::ostream &out;
 
-        Level getLevel();
         template<typename T>
         std::ostream& operator<<(const T& val) {
             return this->out << val;
         }
     };
 
+    std::vector<LogStream> streams;
+
+    Logger();
+public:
     static Logger &get();
 
     void registerStream(std::ostream&, Level);
@@ -60,10 +66,27 @@ public:
     void debug(std::string);
     void error(std::string);
     void fatal(std::string);
-private:
-    Logger();
+};
+
+class CLogger
+{
+    struct LogStream
+    {
+        Level level;
+        std::FILE* stream;
+
+        operator std::FILE*();
+    };
 
     std::vector<LogStream> streams;
+
+    CLogger();
+public:
+    static CLogger &get();
+
+    void registerStream(std::FILE*, Level);
+
+    void log(Level, const char *, ...);
 };
 }
 
